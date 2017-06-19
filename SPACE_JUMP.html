@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>S p a c e J u m p</title>
+</head>
+<body>
+	<img id="firefox" src="firefox.png">
+	<div id="gameover">
+		<h1>G A M E  O V E R</h1>
+		<h4 id="sumary">your score is : </h4>
+		<h3 id="restart"> >> RESTART << </h3>
+	</div>
+	<div id=game>
+		<h1>S p a c e J u m p</h1>
+		<div id=statusbar>
+			<p id="score"></p>
+			<p id="cnt">Bullet : infinity</p>
+		</div>
+		<canvas></canvas>
+		<div id="control">
+			<button id="jump">JUMP</button>
+			<button id="shoot">SHOOT</button>
+		</div>
+	</div>
+</body>
+</html>
+
+<style type="text/css">
+	body{
+		padding: 10px;
+		background: black;
+	}
+	h3{
+		color: red;
+		margin-top: 25px;
+		margin-left: 175px	; 
+		float: center;
+	}
+	h3:hover{
+		color: white;
+	}
+	h4{
+		color: red;
+		margin-top: 30px;
+		margin-left: 192px	; 
+		float: center;
+	}
+	canvas{
+		margin: 0 auto;
+		display: block;
+		border: 3px solid red;
+	}
+	#game>h1{
+		color: red;
+		margin-left: 42%;
+		float: center;
+	}
+	#gameover>h1{
+		color: red;
+		margin-top: 20px;
+		margin-left: 125px; 
+		float: center;
+	}
+	#gameover{
+		width: 512px;
+		height: 190px;
+		margin: 0 auto;
+		display: none;
+		border: 3px solid red;
+	}
+	#firefox{
+		display: none;
+	}
+	#jump{
+		float: center;
+		margin-top: 30px;
+	}
+	#shoot{
+		float: center;
+		margin-top: 30px;
+	}
+	#statusbar{
+		float: left;
+	}
+	#score{
+		position: absolute;
+		color: red;
+	}
+	#cnt{
+		position: absolute;
+		margin-top: 40px; 
+		color: white;
+	}
+	#control{
+		position: absolute;
+		width: 150px;
+		margin: 0 0 0 -75px;
+		left: 50%;
+	}
+</style>
+
+<script type="text/javascript">
+
+	//setvaluable
+	var jump = document.getElementById("jump");
+	var shoot = document.getElementById("shoot");
+
+	var canvas = document.querySelector('canvas');
+	var ctx = canvas.getContext('2d');
+
+	canvas.width = 1024;
+	canvas.height = 512;
+
+	var firefox = document.getElementById("firefox");
+
+	var Bullets = [];
+	var Monsters = [];
+	var Wepons = [];
+	var player1 = new player(482,"nomal",1000,0);
+
+	var game = document.getElementById("game");
+	var gameoverpage = document.getElementById("gameover");
+	var restart = document.getElementById("restart");
+	var showscore = document.getElementById("score");
+	var sumary = document.getElementById("sumary");
+	var cnt = document.getElementById("cnt");
+	var score = 0;
+
+	var items = ["fast","big"];
+
+	showscore.textContent = "score : 0 "
+
+	
+	//class
+	function Bullet(type,x,y,vely){
+		this.type = type;
+		this.x = x;
+		this.y = y;
+		this.vely = vely;
+		if(type === "nomal"){
+			this.speed = 7;
+			this.dmg = 1;
+			this.color = "blue";
+			this.size = 10;
+		}
+		if(type === "dmg"){
+			this.speed = 7;
+			this.dmg = 3;
+			this.color = "red";
+			this.size = 10;
+		}
+		if(type === "fast"){
+			this.speed = 21;
+			this.dmg = 1;
+			this.color = "green";
+			this.size=10;
+		}
+		if(type === "big"){
+			this.speed = 10;
+			this.dmg = 1;
+			this.color = "yellow";
+			this.size=20;
+		}
+		this.update = function(){
+			this.y += this.vely;
+			this.x += this.speed;
+			for(var i=0;i<Monsters.length;i++){
+				Monsters[i].cy = Monsters[i].y+50;
+				Monsters[i].cx = Monsters[i].x+50;
+				this.dx = this.x-Monsters[i].cx;
+				this.dy = this.y-Monsters[i].cy;
+				this.d = Math.sqrt(this.dx*this.dx+this.dy*this.dy);
+				if(this.d<=50+this.size){
+					return true;			
+				}
+				return false;
+			}
+		}
+		this.draw = function(){
+			ctx.beginPath();
+			ctx.arc(this.x,this.y,this.size,0,2*Math.PI);
+			ctx.fillStyle = this.color;
+			ctx.fill();
+		}
+	}
+
+	function player(y,type,n,score){
+		this.vely = 0;
+		this.x = 40;
+		this.y = y;
+		this.type = type;
+		this.n = n;
+		this.score = score;
+		this.draw = function(){
+			ctx.beginPath();
+			ctx.arc(40,this.y,40,0,2*Math.PI);
+			ctx.fillStyle = "white";
+			ctx.fill();
+		}
+		this.update = function(){
+			if(this.y<=472){
+				this.vely += 0.4;
+				this.y+=this.vely;
+			}
+			if(this.y>472){
+				this.vely = 0;
+				this.y = 472;
+			}
+			//console.log(this.vely);
+			//console.log(this.y);
+		}
+	}
+
+	function monster(y,type){
+		this.y = y;
+		this.x = 1128;
+		if(type === "nomal"){
+			this.img = firefox;
+			this.speed = randomNum(4,7);
+			this.blood = 1;
+			this.score = 1;
+		}
+		if(type === "rare"){
+			this.speed = randomNum(4,10);
+			this.blood = 2;
+			this.score = 2;
+		}
+		if(type === "epic"){
+			this.speed = randomNum(4,10);
+			this.blood = 3;
+			this.score = 3;
+		}
+		this.draw = function(){
+			ctx.drawImage(this.img,0,0,961,961,this.x,this.y,100,100);
+		}
+		this.update = function(){
+			this.x -= this.speed;
+			for(var i=0;i<Bullets.length;i++){
+				this.cy = this.y+50;
+				this.cx = this.x+50;
+				this.dx = this.cx-Bullets[i].x;
+				this.dy = this.cy-Bullets[i].y;
+				this.d = Math.sqrt(this.dx*this.dx+this.dy*this.dy);
+				if(this.d<=50+Bullets[i].size){
+					score += this.score
+					showscore.textContent = "score : " + score.toString();
+					return true;			
+				}
+			}
+			return false;
+		}
+		this.kill = function(){
+			this.cy = this.y+50;
+			this.cx = this.x+50;
+			this.dx = this.cx-player1.x;
+			this.dy = this.cy-player1.y;
+			this.d = Math.sqrt(this.dx*this.dx+this.dy*this.dy);
+			if(this.d<=70){
+				return true;
+			}			
+		}
+	}
+
+	function wepon(y,type){
+		this.x = 1024;
+		this.y = y;
+		this.type = type;
+		this.velx = -7;
+		this.draw = function(){
+			ctx.beginPath();
+			ctx.arc(this.x,this.y,10,0,2*Math.PI);
+			ctx.fillStyle = "pink";
+			ctx.fill();
+		}
+		this.update = function(){
+			this.x += this.velx;
+			this.y += Math.floor(randomNum(-1,2));
+			this.dx = this.x-player1.x;
+			this.dy = this.y-player1.y;
+			this.d = Math.sqrt(this.dx*this.dx+this.dy*this.dy);
+			if(this.d<=50){
+				if(player1.type === type){
+					player1.n += 10
+				}
+				else{
+					player1.type = type;
+					player1.n = 10;
+				}
+				if(player1.type === 'big'){
+					cnt.style.color = "yellow";
+					cnt.textContent = "Bullet : " + player1.n.toString();
+				}
+				else if(player1.type === 'fast'){
+					cnt.style.color = "green";
+					cnt.textContent = "Bullet : " + player1.n.toString();
+				}
+				else if(player1.type === 'nomal'){
+					cnt.style.color = "black";
+					cnt.textContent = "Bullet : " + player1.n.toString();
+				}
+				return true;
+			}
+		}
+	}
+
+	//funtion
+	function shooter(y,type){
+		var bullet = new Bullet(type,20,y,randomNum(-0.4,0.4));
+		Bullets.push(bullet);
+
+	}
+
+	function shootManager(){
+		if(player1.n === 0){
+			cnt.style.color = "white";
+			cnt.textContent = "Bullets : infinity"	
+			shooter(player1.y,"nomal");
+		}
+		else{
+			player1.n -=1;
+			if(player1.type === 'big'){
+					cnt.style.color = "yellow";
+					cnt.textContent = "Bullet : " + player1.n.toString();
+				}
+			else if(player1.type === 'fast'){
+					cnt.style.color = "green";
+					cnt.textContent = "Bullet : " + player1.n.toString();
+				}
+			else if(player1.n === 0){
+					cnt.style.color = "white";
+					cnt.textContent = "Bullets : infinity";
+				}
+			shooter(player1.y,player1.type);
+		}
+	}
+
+	function jumper(){
+		if(player1.y === 472){
+			player1.vely = -20;
+		}
+	}
+
+	function monsterGen(){
+		var n = randomNum(0,1000000);
+		//console.log(n);
+		if(n<10000){
+			var mon = new monster(randomNum(0,440),"nomal");
+			Monsters.push(mon);
+		}
+	}
+
+	function weponGen(){
+		var item = items[Math.floor(Math.random()*items.length)];
+		var n = randomNum(0,1000000);
+		//console.log(n);
+		if(n<1000){
+			var wep = new wepon(randomNum(0,440),item);
+			Wepons.push(wep);
+		}
+	}
+
+	function generation(){
+		weponGen();
+		monsterGen();
+	}
+
+	function gameover(){
+		game.style.display = "none";
+		gameoverpage.style.display = "block";
+	}
+
+	function resetgame(){
+		score = 0;
+		cnt.style.color = "white";
+		cnt.textContent = "Bullets : infinity"
+		player1.type = "nomal";
+		player1.n = 0;
+		showscore.textContent = "score : 0 "
+		Bullets = [];
+		Monsters = [];
+		Wepons = [];
+		gameoverpage.style.display = "none";
+		game.style.display = "block";
+	}
+
+	function randomNum(min,max){
+		var num = (Math.random()*(max-min+1)+min);
+		return num;
+	}
+
+	function loop(){
+		//reset canvas
+		ctx.fillStyle = 'rgba(0,0,0,0.25)';
+		ctx.fillRect(0,0,1024,512);
+		
+		//Gen
+		generation();
+		
+		//update
+		for(var i=0;i<Monsters.length;i++){
+			Monsters[i].draw();
+			if(Monsters[i].update()){
+				Monsters.splice(i,1);
+			}
+			else if(Monsters[i].kill()){
+				sumary.textContent = "your score is : " + score.toString();
+				gameover();
+			}
+			else if(Monsters[i].x<-100){
+				console.log("a");
+				Monsters.splice(i,1);
+			}
+		}
+		for(var i=0;i<Bullets.length;i++){
+			Bullets[i].draw();
+			Bullets[i].update();
+			if(Bullets[i].x>1024){
+				Bullets.splice(i,1);
+			}
+			/*else if(Bullets[i].update()){
+				Bullets.splice(i,1);
+			}*/
+		}
+		for(var i=0;i<Wepons.length;i++){
+			Wepons[i].draw();
+			if(Wepons[i].x>1024){
+				Wepons.splice(i,1);
+			}
+			else if(Wepons[i].update()){
+				Wepons.splice(i,1);
+			}
+		}
+		player1.draw();
+		player1.update();
+		requestAnimationFrame(loop);
+	} 	
+
+	//test
+	
+
+	//main()
+
+
+	function main(){
+		restart.addEventListener('click',resetgame);
+		loop();
+	}
+
+	main();
+
+	shoot.addEventListener('click',shootManager);
+	jump.addEventListener('click',jumper);
+	
+	document.addEventListener('keydown',function(event){
+		if(event.keyCode === 38){
+			jumper();
+		}
+		if(event.keyCode === 32){
+			shootManager();
+		}
+	});
+	
+
+</script>
